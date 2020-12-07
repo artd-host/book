@@ -1,4 +1,4 @@
-/* v 3.17
+/* v 3.7.9
 author http://codecanyon.net/user/creativeinteractivemedia/portfolio?ref=creativeinteractivemedia
 */
 var FLIPBOOK = FLIPBOOK || {};
@@ -31,14 +31,12 @@ var FLIPBOOK = FLIPBOOK || {};
         this.flippingRight = false;
         this.options = options
 
-        var index = options.rightToLeft ? options.pages.length / 2 - this.index - 1 : this.index;
-        this.indexF = options.rightToLeft ? 2 * index + 1 : 2 * index
-        this.indexB = options.rightToLeft ? 2 * index : 2 * index + 1
-
         this.showing = false
 
         this.preloaderMatF = preloaderMatF
         this.preloaderMatB = preloaderMatB
+
+        //preloaderMat.side = THREE.DoubleSide
 
         var self = this
 
@@ -59,6 +57,8 @@ var FLIPBOOK = FLIPBOOK || {};
 
         }
 
+
+        // this.gF = new THREE.PlaneGeometry(this.pW, this.pH, this.nfacesw, this.nfacesh)
         this.gF = new THREE.BoxGeometry(this.pW, this.pH, 0.01, this.nfacesw, this.nfacesh, 0)
         var basicMat = new THREE.MeshBasicMaterial({
             color: 0xededed
@@ -90,6 +90,21 @@ var FLIPBOOK = FLIPBOOK || {};
                 preloaderMatF,
                 preloaderMatB
             ]
+
+
+
+        // var basicMat2 = new THREE.MeshBasicMaterial({
+        //     color: 0xFF0000
+        // })
+
+        // var mats3 = [
+        //     basicMat2,
+        //     basicMat2,
+        //     basicMat2,
+        //     basicMat2,
+        //     basicMat2,
+        //     basicMat2
+        // ]
 
         this.cube = new THREE.Mesh(this.gF, mats)
         this.cube.position.x = this.pW * 0.5;
@@ -166,8 +181,13 @@ var FLIPBOOK = FLIPBOOK || {};
 
     FLIPBOOK.PageWebGL.prototype.onPageCanvasLoaded = function(page, side, callback) {
 
+        // console.log("loaded page ",page.pdfPageIndex," ",side)
+
         if (side == 'front' && this.sizeFront != page.size) {
 
+            // console.log("onPageCanvasLoaded ", page, side)
+
+            // this.loadedFront = true
             this.sizeFront = page.size
             var c = page.canvas
             var t1 = new THREE.CanvasTexture(c)
@@ -211,30 +231,19 @@ var FLIPBOOK = FLIPBOOK || {};
             // FLIPBOOK.Buffer.addMaterial(self.backMaterial)
             this.setBackMat(this.backMaterial)
 
+
         }
 
         callback.call(this)
 
-    }
+        //this.book.updateHtmlLayer()
 
-    FLIPBOOK.PageWebGL.prototype.loadHTML = function(side, callback) {
-
-        var index = side == "front" ? this.indexF : this.indexB, self = this
-
-        if(!this.htmlLoaded){
-            // self.htmlLoaded = true
-            this.options.main.loadPageHTML(index, function(html) {
-               callback.call(self)
-              
-            })
-             
-        }
-        else
-             callback.call(this)
-            
     }
 
     FLIPBOOK.PageWebGL.prototype.load = function(side, callback) {
+
+        // console.log("load page "+this.index,side,size)
+
 
         var model = this.book.model
 
@@ -253,9 +262,13 @@ var FLIPBOOK = FLIPBOOK || {};
 
         this.disposed = false
 
+        var index = self.options.rightToLeft ? this.book.pages.length - this.index - 1 : this.index;
+        var p1 = self.options.rightToLeft ? 2 * index + 1 : 2 * index
+        var p2 = self.options.rightToLeft ? 2 * index : 2 * index + 1
+
         var o = options
         var pageSize = model.wrapperH * model.zoom
-        var size = pageSize < o.pageTextureSizeSmall * .8 ? o.pageTextureSizeSmall : o.pageTextureSize
+        var size = pageSize < o.pageTextureSizeTreshold ? o.pageTextureSizeSmall : o.pageTextureSize
 
         if (side == 'front') {
 
@@ -263,7 +276,11 @@ var FLIPBOOK = FLIPBOOK || {};
                 if (callback) callback.call(this)
             } else {
 
-                this.options.main.loadPage(this.indexF, size, function(page) {
+                // console.log("loading page "+this.index+" front")
+
+                // this.sizeFront = size
+
+                this.options.main.loadPage(p1, size, function(page) {
 
                     if (!page) {
                         if (callback) callback.call(self)
@@ -318,7 +335,9 @@ var FLIPBOOK = FLIPBOOK || {};
                 if (callback) callback.call(this)
             } else {
 
-                this.options.main.loadPage(this.indexB, size, function(page) {
+                // console.log("loading page "+this.index+" back")
+
+                this.options.main.loadPage(p2, size, function(page) {
 
                     if (!page) {
                         if (callback) callback.call(self)
@@ -453,6 +472,7 @@ var FLIPBOOK = FLIPBOOK || {};
                 color: 0xffffff,
                 lightMap: sTexture
             });
+            //  console.log("new THREE.MeshStandardMaterial")
 
         } else {
 
@@ -461,9 +481,11 @@ var FLIPBOOK = FLIPBOOK || {};
             });
 
         }
+        //  console.log("new THREE.MeshBasicMaterial")
         return mat
 
     };
+
 
     FLIPBOOK.PageWebGL.prototype._setAngle = function(angle, direction) {
         //console.log(angle,this.index)
@@ -487,6 +509,8 @@ var FLIPBOOK = FLIPBOOK || {};
 
             }
 
+            //console.log(angle,this.index)
+
             if (angle < 0 /*|| (angle == 0 && this.flippingRight)*/ ) {
                 angle = angle + Math.PI
             }
@@ -496,7 +520,22 @@ var FLIPBOOK = FLIPBOOK || {};
             this.positionZ(200)
             this.dragging = true
 
+
+            //test
+            /*if((angle+0.0000001) > Math.PI){
+                console.log("*********************")
+                this.visible = false
+            }
+            else 
+                this.visible = true
+
+            this.rotation.y = -angle/2*/
+            //
+
             this.rotation.y = -angle
+
+
+            //console.log(angle)
 
             // this.bend.force = Math.sin(-angle*2)/2
             if (this.isFlippedLeft)
@@ -1070,8 +1109,12 @@ var FLIPBOOK = FLIPBOOK || {};
             if (this.options.shadows) {
 
                 sl.castShadow = true
-                // sl.shadow.bias = -0.0000015
-                sl.shadow.bias = -0.000002
+                sl.shadow.bias = -0.0000015
+                // sl.shadow.camera.far = 4000;
+
+
+                // this.Scene.add( new THREE.CameraHelper( sl.shadow.camera ) );
+                // sl.shadow.camera.fov = 90;
 
                 sl.shadow.mapSize.x = this.options.shadowMapSize
                 sl.shadow.mapSize.y = this.options.shadowMapSize
@@ -1082,13 +1125,93 @@ var FLIPBOOK = FLIPBOOK || {};
                 var bg = new THREE.Mesh(new THREE.BoxGeometry(10000, 10000, 1, 1, 1, 1),
                     mat)
 
+
+
+                /*new THREE.MeshBasicMaterial({
+                        color: 0xcccccc,
+                        roughness: 1,
+                        metalness: 0,
+                        emissive: 0x222222
+                    }))*/
                 bg.position.set(0, 0, -o.shadowDistance)
                 this.Scene.add(bg)
                 bg.receiveShadow = true
 
             }
 
+
+
+            // sl.position.z = 2 * o.pageWidth > o.pageHeight ? 1.2 * 2 * o.pageWidth : 1.2 * o.pageHeight
+
+
+
             this.Scene.add(sl);
+
+            /*var lh = new THREE.SpotLightHelper( sl );
+            this.Scene.add(lh)
+            this.lh = lh
+            
+
+
+
+            var sCol = o.spotlightColor || 0xFFFFFF
+            sCol = 0x555555
+            var sIntensity = o.spotlightIntensity || .14
+            sIntensity = 1
+            var dl = new THREE.DirectionalLight(sCol);
+            dl.intensity = sIntensity;
+            dl.position.set(1000, 0, 2000);
+            //dl.position.z = 2 * o.pageWidth > o.pageHeight ? 1.2 * 2 * o.pageWidth : 1.2 * o.pageHeight
+            
+            //this.Scene.add(dl);
+
+            dl.castShadow = true;
+            var d = 1000;
+
+            //dl.shadow = new THREE.SpotLightShadow( new THREE.PerspectiveCamera(30,1,1,1000))
+            
+            dl.shadow.camera.left = -d;
+            dl.shadow.camera.right = d;
+            dl.shadow.camera.top = d;
+            dl.shadow.camera.bottom = -d;
+
+            dl.shadow.camera.near = 1;
+            dl.shadow.camera.far = 5000;
+
+            dl.shadow.mapSize.width = 1024;
+            dl.shadow.mapSize.height = 1024;
+            dl.shadow.bias = -0.001
+
+
+
+
+            var spotLight = new THREE.SpotLight( 0xffffff );
+            spotLight.name = 'Spot Light';
+            spotLight.angle = 1;
+            //spotLight.penumbra = 0.3;
+            spotLight.position.set( 0, 0, 2000 );
+            //spotLight.castShadow = true;
+            //spotLight.shadow.camera.near = 1;
+            //spotLight.shadow.camera.far = 3000;
+            //spotLight.shadow.camera.fov = 30;
+
+            //spotLight.shadow.mapSize.width = 1024;
+            //spotLight.shadow.mapSize.height = 1024;
+
+            spotLight.distance = 10000
+            spotLight.penumbra = .1;
+            spotLight.decay = 0;
+
+            //this.Scene.add( spotLight );
+            //this.Scene.add( new THREE.CameraHelper( spotLight.shadow.camera ) );
+
+
+            //var lightHelper1 = new THREE.SpotLightHelper( spotLight );
+            //this.Scene.add(lightHelper1)
+            //this.lightHelper1 = lightHelper1
+
+            //sl.shadowBias = -0.001;
+*/
 
             var ambCol = o.ambientLightColor || 0x333333
             var al = new THREE.AmbientLight(ambCol)
@@ -1120,14 +1243,13 @@ var FLIPBOOK = FLIPBOOK || {};
 
 
         (function a() {
-            FLIPBOOK.TWEEN.update();
             if (self.rendering) {
 
                 if (!self.enabled) {
                     return;
                 }
 
-                //FLIPBOOK.TWEEN.update();
+                FLIPBOOK.TWEEN.update();
 
                 if(self.needsUpdate){
                 // if(1){
@@ -1163,7 +1285,27 @@ var FLIPBOOK = FLIPBOOK || {};
 
         })()
 
+
+
+        //this.initialized = true;
     };
+
+    FLIPBOOK.BookWebGL.prototype.onPageLoaded = function(index, size) {
+
+        var side
+        var sheetIndex = Math.floor(index / 2)
+        if (this.options.rightToLeft) {
+            sheetIndex = this.pages.length - sheetIndex - 1
+            side = index % 2 == 0 ? 'back' : 'front'
+        } else {
+            side = index % 2 == 0 ? 'front' : 'back'
+        }
+
+        // console.log('onPageLoaded ', index, ' ', size)
+
+        //  this.pages[sheetIndex].onPageLoaded(index, side, size)
+
+    }
 
     FLIPBOOK.BookWebGL.prototype.onPageUnloaded = function(index, size) {
 
@@ -1183,6 +1325,8 @@ var FLIPBOOK = FLIPBOOK || {};
     }
 
     FLIPBOOK.BookWebGL.prototype.initHtmlContent = function() {
+
+        
 
         var htmlLayer = document.createElement('div')
         htmlLayer.className = "htmlLayer " + Math.random() 
@@ -1307,6 +1451,8 @@ var FLIPBOOK = FLIPBOOK || {};
         if (this.isZoomed())
             return;
 
+        //console.log(phase)
+
         if (phase == 'start') {
             //this.updateVisiblePages()
         }
@@ -1363,7 +1509,7 @@ var FLIPBOOK = FLIPBOOK || {};
                 return
             }
 
-            if (this.view == 1 && this.isFocusedLeft() && direction == "left" && this.canFlipNext()) {
+            if (this.view == 1 && this.isFocusedLeft() && direction == "left") {
                 this.draggingBookStartX = this.centerContainer.position.x
                 this.draggingBook = true
                 return
@@ -1449,10 +1595,7 @@ var FLIPBOOK = FLIPBOOK || {};
 
             if (this.rightIndex == 0 || this.isFocusedRight()) this.focusRight();
             else this.focusLeft();
-        // } else if(o.responsiveView && this.zoom > 1.2){
-        //     this.view = 1
-        //     this.sc = 1
-        }else {
+        } else {
             this.view = 2
 
             if (r1 < 2 * r2)
@@ -1470,6 +1613,10 @@ var FLIPBOOK = FLIPBOOK || {};
 
         this.renderer.setSize(w, h);
 
+        // console.log(w,h)
+
+        // console.log(this.model.wrapperW)
+
         if (this.htmlLayer) {
             //this.cssRenderer.setSize(w*this.sc, h*this.sc);
             this.cssRenderer.setSize(w, h);
@@ -1481,8 +1628,6 @@ var FLIPBOOK = FLIPBOOK || {};
         this.Camera.updateProjectionMatrix();
         this.updateCameraPosition();
         this.updateBookPosition();
-
-        this.options.main.turnPageComplete()
 
         this.wrapperW = w
         this.wrapperH = h
@@ -1652,6 +1797,8 @@ var FLIPBOOK = FLIPBOOK || {};
 
         self.initialized = true;
 
+        this.updateHtmlLayer()
+
         /*window._m = new THREE.MeshBasicMaterial({color:0xff0000})
        var t =  new THREE.Mesh(new THREE.BoxGeometry(100,100,100), _m)
        this.Scene.add(t)
@@ -1679,7 +1826,7 @@ var FLIPBOOK = FLIPBOOK || {};
         return (this.centerContainer);
     };
 
-    FLIPBOOK.BookWebGL.prototype.goToPage = function(index, instant, moved) { //index in book.pages, not page number
+    FLIPBOOK.BookWebGL.prototype.goToPage = function(index, instant) { //index in book.pages, not page number
 
 
 
@@ -1692,34 +1839,18 @@ var FLIPBOOK = FLIPBOOK || {};
             return;
         }
 
-        if(instant){
-            for (var i = 0; i < this.pages.length; i++) {
-                if (this.pages[i].flippingLeft || this.pages[i].flippingRight)
-                    return;
-            }
-        }
-
+        //if(index % 2 != 0) index++;
         if (index < 0) index = 0
         if (index > this.options.pages.length)
             index = this.options.pages.length
-
-        if(this.view == 1 && !moved){
-            var time = instant ? 0 : 300
-            if(index % 2 == 0)
-                this.focusLeft(time)
-            else
-                this.focusRight(time)
-        }
-
         if (index % 2 != 0)
             index--;
         if (index == this.rightIndex) {
-            this.loadPages()
             this.turnPageComplete()
             return;
         }
 
-        this.goingToPage = true;
+        this.goingToPage = index;
 
         var self = this;
 
@@ -1727,6 +1858,10 @@ var FLIPBOOK = FLIPBOOK || {};
 
         if (typeof(instant) != 'undefined' && instant) {
 
+            // delay = 0;
+            // for(var i=0;i<self.pages.length;i++  ){
+            // self.pages[i].duration = 0;
+            // }
             if (index > self.rightIndex) {
                 while (self.rightIndex < index)
                     this.nextPageInstant()
@@ -1737,9 +1872,8 @@ var FLIPBOOK = FLIPBOOK || {};
             }
 
             this.updateBookPosition()
-            this.loadPages()
             this.turnPageComplete()
-            //this.updateHtmlLayer()
+            this.updateHtmlLayer()
             return;
         }
 
@@ -1752,10 +1886,10 @@ var FLIPBOOK = FLIPBOOK || {};
                 this.prevPage(false);
                 if (delay > 0)
                     setTimeout(function() {
-                        self.goToPage(index, instant, 1)
+                        self.goToPage(index, instant)
                     }, delay);
                 else
-                    self.goToPage(index, instant, 1);
+                    self.goToPage(index, instant);
             } else {
                 this.prevPage();
                 setTimeout(function() {
@@ -1764,8 +1898,7 @@ var FLIPBOOK = FLIPBOOK || {};
                             self.pages[i].duration = self.options.pageFlipDuration;
                         }
                     }
-                    self.loadPages()
-                    //self.turnPageComplete()
+                    self.turnPageComplete()
                 }, delay);
             }
         } else if (this.rightIndex < index) {
@@ -1777,10 +1910,10 @@ var FLIPBOOK = FLIPBOOK || {};
                 this.nextPage(false);
                 if (delay > 0)
                     setTimeout(function() {
-                        self.goToPage(index, instant, 1)
+                        self.goToPage(index, instant)
                     }, delay);
                 else
-                    self.goToPage(index, instant, 1);
+                    self.goToPage(index, instant);
             } else {
                 this.nextPage();
                 setTimeout(function() {
@@ -1789,8 +1922,7 @@ var FLIPBOOK = FLIPBOOK || {};
                             self.pages[i].duration = self.options.pageFlipDuration;
                         }
                     }
-                    self.loadPages()
-                    //self.turnPageComplete()
+                    self.turnPageComplete()
                 }, delay);
             }
         }
@@ -1799,7 +1931,8 @@ var FLIPBOOK = FLIPBOOK || {};
     FLIPBOOK.BookWebGL.prototype.nextPageInstant = function(load) {
         if (this.flippedright == 0)
             return;
-
+        // if(!this.nextEnabled) return
+        //    if flipping in opposite direction already - return
         var i;
         for (i = 0; i < this.pages.length; i++) {
             if (this.pages[i].flippingRight)
@@ -1809,13 +1942,10 @@ var FLIPBOOK = FLIPBOOK || {};
 
         if (this.view == 1) {
             if (this.isFocusedLeft()) {
-                if( !this.goingToPage){
-                    this.focusRight(0);
-                    this.turnPageComplete()
-                    return
-                } else {
-                    this.focusLeft(0, 0)
-                }
+                this.focusRight(0);
+                return
+            } else {
+                this.focusLeft(0, 0)
             }
         } else {
             if (this.flippedright == 1)
@@ -1825,6 +1955,8 @@ var FLIPBOOK = FLIPBOOK || {};
 
         }
 
+
+
         var page = this.pages[this.pages.length - this.flippedright];
 
         page.flipLeftInstant();
@@ -1833,62 +1965,61 @@ var FLIPBOOK = FLIPBOOK || {};
         this.setRightIndex(this.rightIndex + 2)
 
         this.updateBookPosition()
-
     };
 
     FLIPBOOK.BookWebGL.prototype.setRightIndex = function(value) {
 
-        this.rightIndex = value
+            this.rightIndex = value
 
-    },
+        },
 
-    FLIPBOOK.BookWebGL.prototype.prevPageInstant = function(load) {
-        if (this.flippedleft == 0)
-            return;
-        // if(!this.prevEnabled) return
 
-        var i;
-        for (i = 0; i < this.pages.length; i++) {
-            if (this.pages[i].flippingLeft)
+        FLIPBOOK.BookWebGL.prototype.prevPageInstant = function(load) {
+            if (this.flippedleft == 0)
                 return;
-        }
+            // if(!this.prevEnabled) return
 
-        if (this.view == 1) {
-            if( !this.goingToPage){
+            var i;
+            for (i = 0; i < this.pages.length; i++) {
+                if (this.pages[i].flippingLeft)
+                    return;
+            }
+
+            if (this.view == 1) {
                 if (this.isFocusedRight()) {
                     this.focusLeft(0);
-                    this.turnPageComplete()
                     return
                 } else {
                     this.focusRight(0, 0)
                 }
+            } else {
+                if (this.flippedleft == 1)
+                    this.focusRight(0)
+                else
+                    this.focusBoth(0)
             }
-        } else {
-            if (this.flippedleft == 1)
-                this.focusRight(0)
-            else
-                this.focusBoth(0)
-        }
 
-        var page = this.pages[this.flippedleft - 1];
+            var page = this.pages[this.flippedleft - 1];
 
-        page.flipRightInstant();
-        this.flippedleft--;
-        this.flippedright++;
+            page.flipRightInstant();
+            this.flippedleft--;
+            this.flippedright++;
 
-        this.setRightIndex(this.rightIndex - 2)
-        this.updateBookPosition()
-    };
+            this.setRightIndex(this.rightIndex - 2)
+            this.updateBookPosition()
+        };
 
     FLIPBOOK.BookWebGL.prototype.nextPage = function(load) {
 
         // this.nextPageInstant();return;
 
-        if (!this.nextEnabled)
+        if (this.flippedright == 0)
             return;
 
         this.clickedPage = null
-
+        if (this.flippedright == 1 && this.pages.length * 2 > this.options.numPages && !this.options.rightToLeft)
+            return;
+        //    if flipping in opposite direction already - return
         var i;
         var flipping = 0
         for (i = 0; i < this.pages.length; i++) {
@@ -1897,33 +2028,30 @@ var FLIPBOOK = FLIPBOOK || {};
             if (this.pages[i].flipping) flipping++;
         }
 
-        // if(flipping > 1 && !this.goingToPage) 
-        //     return
-
         var page = this.pages[this.pages.length - this.flippedright];
-        if(!page) return;
-        
+
+
+
         var prevPage = this.pages[page.index - 2];
         var beforePrevPage = this.pages[page.index - 3];
         var nextPage = this.pages[page.index + 1];
-        if(!nextPage && !this.options.backCover && !this.options.rightToLeft) return;
+
+        /* if(beforePrevPage)
+             beforePrevPage.hideMat()
+         if (nextPage)
+             nextPage.showMat()*/
 
         if (nextPage && flipping < 5)
             nextPage.showMat()
 
 
         if (this.view == 1) {
-            if( !this.goingToPage){
-
-                if (this.isFocusedLeft()) {
-                    this.focusRight(300, 0, this.turnPageComplete);
-                    return
-                } else {
-                    this.focusLeft(600, 200)
-                }
-
+            if (this.isFocusedLeft()) {
+                this.focusRight(300);
+                return
+            } else {
+                this.focusLeft(600, 200)
             }
-            
         } else {
             if (this.flippedright == 1)
                 this.focusLeft(500)
@@ -1937,7 +2065,6 @@ var FLIPBOOK = FLIPBOOK || {};
                 onComplete;
             if (typeof(load) == 'undefined' || load) {
                 onComplete = function(page) {
-                    self.loadPages()
                     self.turnPageComplete()
                 }
             }
@@ -1950,17 +2077,11 @@ var FLIPBOOK = FLIPBOOK || {};
         this.setRightIndex(this.rightIndex + 2)
 
     };
-    
     FLIPBOOK.BookWebGL.prototype.updateBookPosition = function() {
 
         if (this.view == 1) {
 
-            if(this.flippedright == 0)
-                this.focusLeft()
-            else if(this.flippedleft == 0 )
-                this.focusRight()
-            else
-                this.isFocusedLeft() ? this.focusLeft() : this.focusRight()
+            this.isFocusedLeft() && this.rightIndex > 0 ? this.focusLeft() : this.focusRight()
 
         } else {
             if (this.rightIndex == 0)
@@ -1972,7 +2093,7 @@ var FLIPBOOK = FLIPBOOK || {};
 
         }
 
-        // this.centerContainer.position.y = 0
+        this.centerContainer.position.y = 0
 
         this.updateHtmlLayerPosition()
 
@@ -1993,14 +2114,6 @@ var FLIPBOOK = FLIPBOOK || {};
 
     FLIPBOOK.BookWebGL.prototype.turnPageComplete = function() {
 
-        this.goingToPage = false
-
-        this.options.main.turnPageComplete()
- 
-    }
-
-    FLIPBOOK.BookWebGL.prototype.loadPages = function(){
-
         var self = this
 
         var pages = this.pages
@@ -2013,7 +2126,7 @@ var FLIPBOOK = FLIPBOOK || {};
 
         
 
-        if (this.options.cornerCurl && this.pages[0]) {
+        if (this.options.cornerCurl) {
             if (this.flippedleft == 0)
                 this.pages[0].startCornerCurl()
             else
@@ -2048,7 +2161,15 @@ var FLIPBOOK = FLIPBOOK || {};
 
         }
 
-        /*var rightPage = this.pages[this.flippedleft];
+        this.loadVisiblePages()
+
+        this.options.main.turnPageComplete()
+
+    }
+
+    FLIPBOOK.BookWebGL.prototype.loadVisiblePages = function(){
+
+        var rightPage = this.pages[this.flippedleft];
         var leftPage = this.pages[this.flippedleft - 1];
         var prevPage = this.pages[this.flippedleft - 2];
         var nextPage = this.pages[this.flippedleft + 1];
@@ -2058,100 +2179,74 @@ var FLIPBOOK = FLIPBOOK || {};
         var loadMorePages = this.loadMorePages
         var self = this
         var pages = this.pages
-        var main = this.options.main*/
+        var main = this.options.main
 
         main.setLoadingProgress(.1)
 
-        if (leftPage){
+        if (leftPage) {
             leftPage.load("back", function(c) {
-                if (rightPage){
+
+                if (rightPage)
                     rightPage.load("front", function(c) {
-                        leftPage.loadHTML("back", function(){
-                            rightPage.loadHTML("front", function(){
-                                updateHtmlLayer.call(self)
-                            })
-                        })
-                        
+
                         main.setLoadingProgress(1)
+                        updateHtmlLayer.call(self)
                         loadMorePages.call(self)
                     });
-                }else {
-                    leftPage.loadHTML("back", function(){
-                        updateHtmlLayer.call(self)
-                    })
+                else {
                     main.setLoadingProgress(1)
+                    updateHtmlLayer.call(self)
                     loadMorePages.call(self)
+
                 }
             });
         } else {
             rightPage.load("front", function(c) {
-                rightPage.loadHTML("front", function(){
-                    updateHtmlLayer.call(self)
-                })
+
                 main.setLoadingProgress(1)
+                updateHtmlLayer.call(self)
                 loadMorePages.call(self)
+
             });
         }
+
+
     }
 
-    FLIPBOOK.BookWebGL.prototype.focusLeft = function(time, delay, callback) {
+    FLIPBOOK.BookWebGL.prototype.focusLeft = function(time, delay) {
 
-        var ph = this.options.pageHeight
-        var pw = this.options.pageWidth
-        var cw = this.wrapperW
-        var ch = this.wrapperH
-        var zoom = this.zoom
-        var w = ph * zoom * cw / ch
-        var h = ph * zoom
-        var newX = pw * .5 * this.centerContainer.scale.x
-        var newY = 0
-        
-        this.moveToPos({x:newX, y:newY}, time, delay, callback)
+        // if (this.isFocusedLeft()) return;
+
+        var newX = this.options.pageWidth * .5 * this.centerContainer.scale.x
+        this.moveToPos(newX, time, delay)
 
     };
 
-    FLIPBOOK.BookWebGL.prototype.focusRight = function(time, delay, callback) {
+    FLIPBOOK.BookWebGL.prototype.focusRight = function(time, delay) {
 
-        var ph = this.options.pageHeight
-        var pw = this.options.pageWidth
-        var cw = this.wrapperW
-        var ch = this.wrapperH
-        var zoom = this.zoom
-        var w = ph * zoom * cw / ch
-        var h = ph * zoom
-        var newX = -pw * .5 * this.centerContainer.scale.x
-        var newY = 0
+        //if (this.isFocusedRight()) return;
 
-        this.moveToPos({x:newX, y:newY}, time, delay, callback)
+        var newX = -this.options.pageWidth * .5 * this.centerContainer.scale.x
+        this.moveToPos(newX, time, delay)
 
     };
 
-    FLIPBOOK.BookWebGL.prototype.focusBoth = function(time, delay, callback) {
+    FLIPBOOK.BookWebGL.prototype.focusBoth = function(time, delay) {
 
-        var ph = this.options.pageHeight
-        var pw = this.options.pageWidth
-        var cw = this.wrapperW
-        var ch = this.wrapperH
-        var zoom = this.zoom
-        var w = ph * zoom * cw / ch
-        var h = ph * zoom
-        var newX = 0
-        var newY = 0
-        
-        this.moveToPos({x:newX, y:newY}, time, delay, callback)
+        if (this.isFocusedLeft() || this.isFocusedRight())
+            this.moveToPos(0, time, delay)
 
     };
 
-    FLIPBOOK.BookWebGL.prototype.moveToPos = function(pos, time, delay, callback) {
+    FLIPBOOK.BookWebGL.prototype.moveToPos = function(pos, time, delay) {
 
-        if (time && this.movingTo != pos && this.centerContainer.position.x != pos.x) {
+        if (time && this.movingTo != pos && this.centerContainer.position.x != pos) {
+
+            // console.log("tween")
             var self = this
             this.movingTo = pos
-            
-            if(this.bookMoveTween) this.bookMoveTween.stop()
-            this.bookMoveTween = new FLIPBOOK.TWEEN.Tween(this.centerContainer.position).to({
-                    x: pos.x,
-                    y: pos.y
+            var tween = new FLIPBOOK.TWEEN.Tween(this.centerContainer.position).to({
+                    x: pos
                 }, time)
                 .easing(FLIPBOOK.TWEEN.Easing.Sinusoidal.Out)
                 .onUpdate(function() {
@@ -2159,17 +2254,16 @@ var FLIPBOOK = FLIPBOOK || {};
                 })
                 .onComplete(function() {
                     self.movingTo = null
+
                     self.updateHtmlLayerPosition()
-                    if(callback) callback.call(self)
+
+
                 })
                 .delay(delay || 0)
                 .start();
 
-        } else{
-            this.centerContainer.position.x = pos.x
-            this.centerContainer.position.y = pos.y
-            if(callback) callback.call(this)
-        }
+        } else
+            this.centerContainer.position.x = pos
     };
 
     FLIPBOOK.BookWebGL.prototype.isFocusedLeft = function() {
@@ -2186,10 +2280,14 @@ var FLIPBOOK = FLIPBOOK || {};
 
     FLIPBOOK.BookWebGL.prototype.prevPage = function(load) {
 
-        if (!this.prevEnabled)
+        // this.prevPageInstant();return;
+        if (this.flippedleft == 0)
             return;
 
         this.clickedPage = null
+
+        if (this.flippedleft == 1 && this.pages.length * 2 == this.options.numPages && this.options.rightToLeft && this.options.oddPages)
+            return;
 
         var i;
         var flipping = 0
@@ -2200,31 +2298,29 @@ var FLIPBOOK = FLIPBOOK || {};
             if (this.pages[i].flipping) flipping++;
         }
 
-         // if(flipping > 1 && !this.goingToPage) 
-         //    return
-
         var page = this.pages[this.flippedleft - 1];
-        if(!page) return;
 
         var prevPage = this.pages[page.index - 1];
-        if(!prevPage && this.options.rightToLeft && !this.options.backCover) return;
-        
         var nextPage = this.pages[page.index + 2];
         var afterNextPage = this.pages[page.index + 3];
+
+        /*  if (prevPage)
+              prevPage.showMat()
+          if(afterNextPage)
+              afterNextPage.hideMat()*/
 
         if (prevPage && flipping < 5)
             prevPage.showMat()
 
-        if (this.view == 1 ){
-            if(!this.goingToPage){
-                if (this.isFocusedRight()) {
-                    this.focusLeft(300, 0, this.turnPageComplete);
-                    return
-                } else {
-                    this.focusRight(600, 200)
-                }
+
+
+        if (this.view == 1) {
+            if (this.isFocusedRight()) {
+                this.focusLeft(300);
+                return
+            } else {
+                this.focusRight(600, 200)
             }
-            
         } else {
             if (this.flippedleft == 1)
                 this.focusRight(500)
@@ -2237,7 +2333,6 @@ var FLIPBOOK = FLIPBOOK || {};
                 onComplete;
             if (typeof(load) == 'undefined' || load) {
                 onComplete = function(page) {
-                    self.loadPages()
                     self.turnPageComplete()
                 }
             }
@@ -2256,6 +2351,12 @@ var FLIPBOOK = FLIPBOOK || {};
 
     FLIPBOOK.BookWebGL.prototype.flipFinnished = function() {
 
+        // this.pages[this.flippedleft].load();
+        // this.pages[this.flippedleft+1].load();
+        // console.log("flip finnished");
+        // this.pages[1].load();
+        //console.log('flip finnished')
+        this.updateHtmlLayer()
         this.needsUpdate = true
 
     };
@@ -2308,6 +2409,10 @@ var FLIPBOOK = FLIPBOOK || {};
             if (this.pages[i].flipping)
                 return
         }
+        //flip finnished
+        //show left and right html content
+
+        /* if(this.rightIndex == this.htmlContentRightIndex) return;*/
 
         this.htmlContentRightIndex = this.rightIndex;
 
@@ -2319,6 +2424,8 @@ var FLIPBOOK = FLIPBOOK || {};
         if (this.options.doublePage) {
 
             //cover
+
+
 
             if (this.rightIndex == 0) {
 
@@ -2339,7 +2446,7 @@ var FLIPBOOK = FLIPBOOK || {};
 
                 }
 
-            //back cover
+                //back cover
 
             } else if (this.rightIndex == this.pages.length * 2) {
 
@@ -2360,7 +2467,7 @@ var FLIPBOOK = FLIPBOOK || {};
 
                 }
 
-            //spreads
+                //spreads
 
             } else {
 
@@ -2384,15 +2491,21 @@ var FLIPBOOK = FLIPBOOK || {};
 
             }
 
+
+
         } else {
 
             this.$pageC.hide()
+
+
 
             if (this.rightIndex == 0) {
 
                 this.$pageL.hide()
 
             } else {
+
+                //console.log(this.rightIndex,R,L)
 
                 if (this.options.pages[L].htmlContent) {
 
@@ -2414,6 +2527,8 @@ var FLIPBOOK = FLIPBOOK || {};
                 this.$pageR.hide()
 
             } else {
+
+                //console.log(this.rightIndex,R,L)
 
                 if (this.options.pages[R].htmlContent) {
 
@@ -2448,6 +2563,30 @@ var FLIPBOOK = FLIPBOOK || {};
 
     FLIPBOOK.BookWebGL.prototype.onZoom = function() {
 
+
+        // var pageSize = this.zoom * this.model.wrapperH
+        // this.options.pageTextureSize = pageSize
+        
+        return
+
+        var self = this
+        if (this.enabled)
+            setTimeout(function() {
+                /*for (var i = 0; i < self.pages.length; i++) {
+                    self.pages[i].loaded = false
+                }*/
+                /*var rightPage = self.pages[self.flippedleft];
+                var leftPage = self.pages[self.flippedleft - 1];
+                if (rightPage)
+                    rightPage.load('front',2048);
+                if (leftPage)
+                    leftPage.load('back',2048);*/
+
+                /*console.log(leftPage, rightPage)*/
+                self.turnPageComplete()
+
+            }, 100)
+
     };
 
     FLIPBOOK.BookWebGL.prototype.render = function(rendering) {
@@ -2462,14 +2601,10 @@ var FLIPBOOK = FLIPBOOK || {};
         // console.log("zoom to ",amount)
         if (this.zooming)
             return;
-
-        if(!this.pages.length)
-            return;
-            
         if (typeof(time) === 'undefined')
             time = 0;
 
-        var newCenter = this.centerContainer.position
+        var newCenter = {x:0,y:0}
 
         if (typeof x != 'undefined' && typeof y != 'undefined') {
 
@@ -2486,10 +2621,10 @@ var FLIPBOOK = FLIPBOOK || {};
             newCenter.x = center.x - (focus.x - focusNew.x)
             newCenter.y = center.y - (focus.y - focusNew.y)
 
+            
         }
 
         var self = this;
-        var o = this.options
         newZoom = amount > this.options.zoomMax ? this.options.zoomMax : amount;
         newZoom = amount < this.options.zoomMin ? this.options.zoomMin : amount;
 
@@ -2514,6 +2649,8 @@ var FLIPBOOK = FLIPBOOK || {};
             if (!this.zooming) {
                 this.zooming = true;
 
+                // console.log(self.centerContainer.position)
+
                 new FLIPBOOK.TWEEN.Tween(this).to({
                         zoom: newZoom,
                     }, time)
@@ -2521,6 +2658,7 @@ var FLIPBOOK = FLIPBOOK || {};
                     .onUpdate(this.updateCameraPosition)
                     .onComplete(function() {
                         self.zooming = false
+                        self.onZoom()
 
                     })
                     .start();
@@ -2557,33 +2695,27 @@ var FLIPBOOK = FLIPBOOK || {};
 
             this.updateCameraPosition()
 
+
+            //this.centerContainer.position.set(newCenter.x, newCenter.y, 0);
             this.zooming = false
+            self.onZoom()
         }
 
 
         if (amount <= 1 && amount <= this.zoom)
             this.updateBookPosition()
 
+
         this.options.main.onZoom(newZoom)
         
-        this.loadPages()
-
-        //switch to responsive view if page width is > than container
-        // var cw = this.wrapperW
-        // var ch = this.wrapperH
-        // var bw = 2 * this.options.pageWidth
-        // var ch2 = this.options.pageHeight
-        // var cw2 = ch2 * cw / ch
-        // if(o.responsiveView && bw * this.zoom > cw2){
-        //     this.view = 1
-        // }else{
-        //     this.view = 2
-        // }
+        this.turnPageComplete()
 
     };
 
     FLIPBOOK.BookWebGL.prototype.tiltTo = function(amount) {
 
+        //    if(this.tilting)
+        //        return;
         var self = this,
             factor = .3;
         var newTilt = this.tilt + amount * factor;
@@ -2593,10 +2725,18 @@ var FLIPBOOK = FLIPBOOK || {};
         this.tilt = newTilt;
         this.updateCameraPosition();
 
+        //    this.tilting = true;
+        //    new TWEEN.Tween(this).to({tilt:newTilt}, 400)
+        //        .easing( TWEEN.Easing.Sinusoidal.EaseInOut)
+        //        .onUpdate(this.updateCameraPosition)
+        //        .onComplete(function(){self.tilting = false})
+        //        .start();
     };
 
     FLIPBOOK.BookWebGL.prototype.panTo = function(amount) {
 
+        //    if(this.tilting)
+        //        return;
         var self = this,
             factor = .2;
         var newPan = this.pan - amount * factor;
@@ -2617,7 +2757,8 @@ var FLIPBOOK = FLIPBOOK || {};
     FLIPBOOK.BookWebGL.prototype.handleEvent = function(e) {
 
         var self = this;
-
+        // e.preventDefault()
+        //console.log(e);
         switch (e.type) {
             case 'mousedown':
                 self._start(e);
@@ -2632,9 +2773,6 @@ var FLIPBOOK = FLIPBOOK || {};
                 self._move(e);
                 break;
             case 'mouseout':
-                jQuery(self.wrapper).trigger('mouseup')
-                self.mouseDown = false
-                break;
             case 'mouseup':
             case 'touchend':
                 self._end(e);
@@ -2745,21 +2883,6 @@ var FLIPBOOK = FLIPBOOK || {};
 
     };
 
-    FLIPBOOK.BookWebGL.prototype.move = function(direction) {
-        if(this.zoom <= 1) return;
-        var posX = 0, posY = 0, offset = 20;
-        switch(direction){
-            case 'left': posX = offset; break;
-            case 'right': posX = -offset; break;
-            case 'up': posY = offset; break;
-            case 'down': posY = -offset; break;
-        }
-        this.centerContainer.position.x += (10000 * posX / (this.cameraZ * this.zoom * this.zoom));
-        this.centerContainer.position.y -= (10000 * posY / (this.cameraZ * this.zoom * this.zoom));
-        this.updateHtmlLayerPosition()
-
-    }
-
     FLIPBOOK.BookWebGL.prototype._move = function(e) {
 
         // return
@@ -2815,6 +2938,7 @@ var FLIPBOOK = FLIPBOOK || {};
                 this.centerContainer.position.y -= (10000 * deltaY / (this.cameraZ * this.zoom * this.zoom));
 
             }
+            // this.centerContainer.position.x = 100           
 
             this.updateHtmlLayerPosition()
 
@@ -2823,6 +2947,7 @@ var FLIPBOOK = FLIPBOOK || {};
             var left = this.getLeftPage()
             if (!this.options.rotateCameraOnMouseMove && this.options.rotateCameraOnMouseDrag && (!left || !left.dragging) && (!right || !right.dragging)) {
                 this.tiltTo(deltaY);
+                //this.panTo(deltaX);
             }
         }
     };
@@ -4799,350 +4924,343 @@ var FLIPBOOK = FLIPBOOK || {};
 {
 
 
+
     /**
-     * Based on http://www.emagix.net/academic/mscs-project/item/camera-sync-with-css3-and-webgl-threejs
-     * @author mrdoob / http://mrdoob.com/
-     * @author yomotsu / https://yomotsu.net/
-     */
+ * Based on http://www.emagix.net/academic/mscs-project/item/camera-sync-with-css3-and-webgl-threejs
+ * @author mrdoob / http://mrdoob.com/
+ * @author yomotsu / https://yomotsu.net/
+ */
 
-    FLIPBOOK.CSS3DObject = function ( element ) {
+FLIPBOOK.CSS3DObject = function ( element ) {
 
-        THREE.Object3D.call( this );
+    THREE.Object3D.call( this );
 
-        this.element = element;
-        this.element.style.position = 'absolute';
-        this.element.style.pointerEvents = 'auto';
+    this.type = "CSS3DObject"
 
-        this.addEventListener( 'removed', function () {
+    this.element = element;
+    this.element.style.position = 'absolute';
 
-            this.traverse( function ( object ) {
+    this.addEventListener( 'removed', function () {
 
-                if ( object.element instanceof Element && object.element.parentNode !== null ) {
+        if ( this.element.parentNode !== null ) {
 
-                    object.element.parentNode.removeChild( object.element );
+            this.element.parentNode.removeChild( this.element );
+
+        }
+
+    } );
+
+};
+
+FLIPBOOK.CSS3DObject.prototype = Object.create( THREE.Object3D.prototype );
+FLIPBOOK.CSS3DObject.prototype.constructor = FLIPBOOK.CSS3DObject;
+
+FLIPBOOK.CSS3DSprite = function ( element ) {
+
+    FLIPBOOK.CSS3DObject.call( this, element );
+
+    this.type = "CSS3DSprite"
+
+};
+
+FLIPBOOK.CSS3DSprite.prototype = Object.create( FLIPBOOK.CSS3DObject.prototype );
+FLIPBOOK.CSS3DSprite.prototype.constructor = FLIPBOOK.CSS3DSprite;
+
+//
+
+FLIPBOOK.CSS3DRenderer = function () {
+
+    // console.log( 'THREE.CSS3DRenderer', THREE.REVISION );
+
+    var _width, _height;
+    var _widthHalf, _heightHalf;
+
+    var matrix = new THREE.Matrix4();
+
+    var cache = {
+        camera: { fov: 0, style: '' },
+        objects: new WeakMap()
+    };
+
+    var domElement = document.createElement( 'div' );
+    domElement.style.overflow = 'hidden';
+
+    this.domElement = domElement;
+
+    var cameraElement = document.createElement( 'div' );
+
+    cameraElement.className = "cameraElement " + Math.random()
+
+    cameraElement.style.WebkitTransformStyle = 'preserve-3d';
+    cameraElement.style.transformStyle = 'preserve-3d';
+
+    domElement.appendChild( cameraElement );
+
+    var isIE = /Trident/i.test( navigator.userAgent );
+
+    this.getSize = function () {
+
+        return {
+            width: _width,
+            height: _height
+        };
+
+    };
+
+    this.setSize = function ( width, height ) {
+
+        _width = width;
+        _height = height;
+        _widthHalf = _width / 2;
+        _heightHalf = _height / 2;
+
+        domElement.style.width = width + 'px';
+        domElement.style.height = height + 'px';
+
+        cameraElement.style.width = width + 'px';
+        cameraElement.style.height = height + 'px';
+
+    };
+
+    function epsilon( value ) {
+
+        return Math.abs( value ) < 1e-10 ? 0 : value;
+
+    }
+
+    function getCameraCSSMatrix( matrix ) {
+
+        var elements = matrix.elements;
+
+        return 'matrix3d(' +
+            epsilon( elements[ 0 ] ) + ',' +
+            epsilon( - elements[ 1 ] ) + ',' +
+            epsilon( elements[ 2 ] ) + ',' +
+            epsilon( elements[ 3 ] ) + ',' +
+            epsilon( elements[ 4 ] ) + ',' +
+            epsilon( - elements[ 5 ] ) + ',' +
+            epsilon( elements[ 6 ] ) + ',' +
+            epsilon( elements[ 7 ] ) + ',' +
+            epsilon( elements[ 8 ] ) + ',' +
+            epsilon( - elements[ 9 ] ) + ',' +
+            epsilon( elements[ 10 ] ) + ',' +
+            epsilon( elements[ 11 ] ) + ',' +
+            epsilon( elements[ 12 ] ) + ',' +
+            epsilon( - elements[ 13 ] ) + ',' +
+            epsilon( elements[ 14 ] ) + ',' +
+            epsilon( elements[ 15 ] ) +
+        ')';
+
+    }
+
+    function getObjectCSSMatrix( matrix, cameraCSSMatrix ) {
+
+        var elements = matrix.elements;
+        var matrix3d = 'matrix3d(' +
+            epsilon( elements[ 0 ] ) + ',' +
+            epsilon( elements[ 1 ] ) + ',' +
+            epsilon( elements[ 2 ] ) + ',' +
+            epsilon( elements[ 3 ] ) + ',' +
+            epsilon( - elements[ 4 ] ) + ',' +
+            epsilon( - elements[ 5 ] ) + ',' +
+            epsilon( - elements[ 6 ] ) + ',' +
+            epsilon( - elements[ 7 ] ) + ',' +
+            epsilon( elements[ 8 ] ) + ',' +
+            epsilon( elements[ 9 ] ) + ',' +
+            epsilon( elements[ 10 ] ) + ',' +
+            epsilon( elements[ 11 ] ) + ',' +
+            epsilon( elements[ 12 ] ) + ',' +
+            epsilon( elements[ 13 ] ) + ',' +
+            epsilon( elements[ 14 ] ) + ',' +
+            epsilon( elements[ 15 ] ) +
+        ')';
+
+        if ( isIE ) {
+
+            return 'translate(-50%,-50%)' +
+                'translate(' + _widthHalf + 'px,' + _heightHalf + 'px)' +
+                cameraCSSMatrix +
+                matrix3d;
+
+        }
+
+        return 'translate(-50%,-50%)' + matrix3d;
+
+    }
+
+    function renderObject( object, camera, cameraCSSMatrix ) {
+
+        if ( object instanceof FLIPBOOK.CSS3DObject ) {
+        // if ( object.type == "CSS3DObject" ) {
+
+            var style;
+
+            if ( object instanceof FLIPBOOK.CSS3DSprite ) {
+            // if ( object.type == "CSS3DSprite" ) {
+
+                // http://swiftcoder.wordpress.com/2008/11/25/constructing-a-billboard-matrix/
+
+                matrix.copy( camera.matrixWorldInverse );
+                matrix.transpose();
+                matrix.copyPosition( object.matrixWorld );
+                matrix.scale( object.scale );
+
+                matrix.elements[ 3 ] = 0;
+                matrix.elements[ 7 ] = 0;
+                matrix.elements[ 11 ] = 0;
+                matrix.elements[ 15 ] = 1;
+
+                style = getObjectCSSMatrix( matrix, cameraCSSMatrix );
+
+            } else {
+
+                style = getObjectCSSMatrix( object.matrixWorld, cameraCSSMatrix );
+
+            }
+
+            var element = object.element;
+            var cachedStyle = cache.objects.get( object );
+
+            if ( cachedStyle === undefined || cachedStyle !== style ) {
+
+                element.style.WebkitTransform = style;
+                element.style.transform = style;
+
+                var objectData = { style: style };
+
+                if ( isIE ) {
+
+                    objectData.distanceToCameraSquared = getDistanceToSquared( camera, object );
 
                 }
 
-            } );
+                cache.objects.set( object, objectData );
+
+            }
+
+            // console.log(element.className)
+
+            if ( element.parentNode !== cameraElement ) {
+
+                cameraElement.appendChild( element );
+
+            }
+
+        }
+
+        for ( var i = 0, l = object.children.length; i < l; i ++ ) {
+
+            renderObject( object.children[ i ], camera, cameraCSSMatrix );
+
+        }
+
+    }
+
+    var getDistanceToSquared = function () {
+
+        var a = new THREE.Vector3();
+        var b = new THREE.Vector3();
+
+        return function ( object1, object2 ) {
+
+            a.setFromMatrixPosition( object1.matrixWorld );
+            b.setFromMatrixPosition( object2.matrixWorld );
+
+            return a.distanceToSquared( b );
+
+        };
+
+    }();
+
+    function filterAndFlatten( scene ) {
+
+        var result = [];
+
+        scene.traverse( function ( object ) {
+
+            if ( object instanceof FLIPBOOK.CSS3DObject ) result.push( object );
 
         } );
 
+        return result;
+
+    }
+
+    function zOrder( scene ) {
+
+        var sorted = filterAndFlatten( scene ).sort( function ( a, b ) {
+
+            var distanceA = cache.objects.get( a ).distanceToCameraSquared;
+            var distanceB = cache.objects.get( b ).distanceToCameraSquared;
+
+            return distanceA - distanceB;
+
+        } );
+
+        var zMax = sorted.length;
+
+        for ( var i = 0, l = sorted.length; i < l; i ++ ) {
+
+            sorted[ i ].element.style.zIndex = zMax - i;
+
+        }
+
+    }
+
+    this.render = function ( scene, camera ) {
+
+        var fov = camera.projectionMatrix.elements[ 5 ] * _heightHalf;
+
+        if ( cache.camera.fov !== fov ) {
+
+            if ( camera.isPerspectiveCamera ) {
+
+                domElement.style.WebkitPerspective = fov + 'px';
+                domElement.style.perspective = fov + 'px';
+
+            }
+
+            cache.camera.fov = fov;
+
+        }
+
+        scene.updateMatrixWorld();
+
+        if ( camera.parent === null ) camera.updateMatrixWorld();
+
+        var cameraCSSMatrix = camera.isOrthographicCamera ?
+            'scale(' + fov + ')' + getCameraCSSMatrix( camera.matrixWorldInverse ) :
+            'translateZ(' + fov + 'px)' + getCameraCSSMatrix( camera.matrixWorldInverse );
+
+        var style = cameraCSSMatrix +
+            'translate(' + _widthHalf + 'px,' + _heightHalf + 'px)';
+
+        if ( cache.camera.style !== style && ! isIE ) {
+
+            cameraElement.style.WebkitTransform = style;
+            cameraElement.style.transform = style;
+
+            cache.camera.style = style;
+
+        }
+
+        renderObject( scene, camera, cameraCSSMatrix );
+
+        if ( isIE ) {
+
+            // IE10 and 11 does not support 'preserve-3d'.
+            // Thus, z-order in 3D will not work.
+            // We have to calc z-order manually and set CSS z-index for IE.
+            // FYI: z-index can't handle object intersection
+            zOrder( scene );
+
+        }
+
     };
 
-    FLIPBOOK.CSS3DObject.prototype = Object.create( THREE.Object3D.prototype );
-    FLIPBOOK.CSS3DObject.prototype.constructor = FLIPBOOK.CSS3DObject;
+};
 
-    FLIPBOOK.CSS3DSprite = function ( element ) {
 
-        FLIPBOOK.CSS3DObject.call( this, element );
 
-    };
-
-    FLIPBOOK.CSS3DSprite.prototype = Object.create( FLIPBOOK.CSS3DObject.prototype );
-    FLIPBOOK.CSS3DSprite.prototype.constructor = FLIPBOOK.CSS3DSprite;
-
-    //
-
-    FLIPBOOK.CSS3DRenderer = function () {
-
-        var _this = this;
-
-        var _width, _height;
-        var _widthHalf, _heightHalf;
-
-        var matrix = new THREE.Matrix4();
-
-        var cache = {
-            camera: { fov: 0, style: '' },
-            objects: new WeakMap()
-        };
-
-        var domElement = document.createElement( 'div' );
-        domElement.style.overflow = 'hidden';
-
-        this.domElement = domElement;
-
-        var cameraElement = document.createElement( 'div' );
-
-        cameraElement.style.WebkitTransformStyle = 'preserve-3d';
-        cameraElement.style.transformStyle = 'preserve-3d';
-        cameraElement.style.pointerEvents = 'none';
-
-        domElement.appendChild( cameraElement );
-
-        var isIE = /Trident/i.test( navigator.userAgent );
-
-        this.getSize = function () {
-
-            return {
-                width: _width,
-                height: _height
-            };
-
-        };
-
-        this.setSize = function ( width, height ) {
-
-            _width = width;
-            _height = height;
-            _widthHalf = _width / 2;
-            _heightHalf = _height / 2;
-
-            domElement.style.width = width + 'px';
-            domElement.style.height = height + 'px';
-
-            cameraElement.style.width = width + 'px';
-            cameraElement.style.height = height + 'px';
-
-        };
-
-        function epsilon( value ) {
-
-            return Math.abs( value ) < 1e-10 ? 0 : value;
-
-        }
-
-        function getCameraCSSMatrix( matrix ) {
-
-            var elements = matrix.elements;
-
-            return 'matrix3d(' +
-                epsilon( elements[ 0 ] ) + ',' +
-                epsilon( - elements[ 1 ] ) + ',' +
-                epsilon( elements[ 2 ] ) + ',' +
-                epsilon( elements[ 3 ] ) + ',' +
-                epsilon( elements[ 4 ] ) + ',' +
-                epsilon( - elements[ 5 ] ) + ',' +
-                epsilon( elements[ 6 ] ) + ',' +
-                epsilon( elements[ 7 ] ) + ',' +
-                epsilon( elements[ 8 ] ) + ',' +
-                epsilon( - elements[ 9 ] ) + ',' +
-                epsilon( elements[ 10 ] ) + ',' +
-                epsilon( elements[ 11 ] ) + ',' +
-                epsilon( elements[ 12 ] ) + ',' +
-                epsilon( - elements[ 13 ] ) + ',' +
-                epsilon( elements[ 14 ] ) + ',' +
-                epsilon( elements[ 15 ] ) +
-            ')';
-
-        }
-
-        function getObjectCSSMatrix( matrix, cameraCSSMatrix ) {
-
-            var elements = matrix.elements;
-            var matrix3d = 'matrix3d(' +
-                epsilon( elements[ 0 ] ) + ',' +
-                epsilon( elements[ 1 ] ) + ',' +
-                epsilon( elements[ 2 ] ) + ',' +
-                epsilon( elements[ 3 ] ) + ',' +
-                epsilon( - elements[ 4 ] ) + ',' +
-                epsilon( - elements[ 5 ] ) + ',' +
-                epsilon( - elements[ 6 ] ) + ',' +
-                epsilon( - elements[ 7 ] ) + ',' +
-                epsilon( elements[ 8 ] ) + ',' +
-                epsilon( elements[ 9 ] ) + ',' +
-                epsilon( elements[ 10 ] ) + ',' +
-                epsilon( elements[ 11 ] ) + ',' +
-                epsilon( elements[ 12 ] ) + ',' +
-                epsilon( elements[ 13 ] ) + ',' +
-                epsilon( elements[ 14 ] ) + ',' +
-                epsilon( elements[ 15 ] ) +
-            ')';
-
-            if ( isIE ) {
-
-                return 'translate(-50%,-50%)' +
-                    'translate(' + _widthHalf + 'px,' + _heightHalf + 'px)' +
-                    cameraCSSMatrix +
-                    matrix3d;
-
-            }
-
-            return 'translate(-50%,-50%)' + matrix3d;
-
-        }
-
-        function renderObject( object, scene, camera, cameraCSSMatrix ) {
-
-            if ( object instanceof FLIPBOOK.CSS3DObject ) {
-
-                object.onBeforeRender( _this, scene, camera );
-
-                var style;
-
-                if ( object instanceof FLIPBOOK.CSS3DSprite ) {
-
-                    // http://swiftcoder.wordpress.com/2008/11/25/constructing-a-billboard-matrix/
-
-                    matrix.copy( camera.matrixWorldInverse );
-                    matrix.transpose();
-                    matrix.copyPosition( object.matrixWorld );
-                    matrix.scale( object.scale );
-
-                    matrix.elements[ 3 ] = 0;
-                    matrix.elements[ 7 ] = 0;
-                    matrix.elements[ 11 ] = 0;
-                    matrix.elements[ 15 ] = 1;
-
-                    style = getObjectCSSMatrix( matrix, cameraCSSMatrix );
-
-                } else {
-
-                    style = getObjectCSSMatrix( object.matrixWorld, cameraCSSMatrix );
-
-                }
-
-                var element = object.element;
-                var cachedObject = cache.objects.get( object );
-
-                if ( cachedObject === undefined || cachedObject.style !== style ) {
-
-                    element.style.WebkitTransform = style;
-                    element.style.transform = style;
-
-                    var objectData = { style: style };
-
-                    if ( isIE ) {
-
-                        objectData.distanceToCameraSquared = getDistanceToSquared( camera, object );
-
-                    }
-
-                    cache.objects.set( object, objectData );
-
-                }
-
-                if ( element.parentNode !== cameraElement ) {
-
-                    cameraElement.appendChild( element );
-
-                }
-
-                object.onAfterRender( _this, scene, camera );
-
-            }
-
-            for ( var i = 0, l = object.children.length; i < l; i ++ ) {
-
-                renderObject( object.children[ i ], scene, camera, cameraCSSMatrix );
-
-            }
-
-        }
-
-        var getDistanceToSquared = function () {
-
-            var a = new THREE.Vector3();
-            var b = new THREE.Vector3();
-
-            return function ( object1, object2 ) {
-
-                a.setFromMatrixPosition( object1.matrixWorld );
-                b.setFromMatrixPosition( object2.matrixWorld );
-
-                return a.distanceToSquared( b );
-
-            };
-
-        }();
-
-        function filterAndFlatten( scene ) {
-
-            var result = [];
-
-            scene.traverse( function ( object ) {
-
-                if ( object instanceof THREE.CSS3DObject ) result.push( object );
-
-            } );
-
-            return result;
-
-        }
-
-        function zOrder( scene ) {
-
-            var sorted = filterAndFlatten( scene ).sort( function ( a, b ) {
-
-                var distanceA = cache.objects.get( a ).distanceToCameraSquared;
-                var distanceB = cache.objects.get( b ).distanceToCameraSquared;
-
-                return distanceA - distanceB;
-
-            } );
-
-            var zMax = sorted.length;
-
-            for ( var i = 0, l = sorted.length; i < l; i ++ ) {
-
-                sorted[ i ].element.style.zIndex = zMax - i;
-
-            }
-
-        }
-
-        this.render = function ( scene, camera ) {
-
-            var fov = camera.projectionMatrix.elements[ 5 ] * _heightHalf;
-
-            if ( cache.camera.fov !== fov ) {
-
-                if ( camera.isPerspectiveCamera ) {
-
-                    domElement.style.WebkitPerspective = fov + 'px';
-                    domElement.style.perspective = fov + 'px';
-
-                } else {
-
-                    domElement.style.WebkitPerspective = '';
-                    domElement.style.perspective = '';
-
-                }
-
-                cache.camera.fov = fov;
-
-            }
-
-            if ( scene.autoUpdate === true ) scene.updateMatrixWorld();
-            if ( camera.parent === null ) camera.updateMatrixWorld();
-
-            if ( camera.isOrthographicCamera ) {
-
-                var tx = - ( camera.right + camera.left ) / 2;
-                var ty = ( camera.top + camera.bottom ) / 2;
-
-            }
-
-            var cameraCSSMatrix = camera.isOrthographicCamera ?
-                'scale(' + fov + ')' + 'translate(' + epsilon( tx ) + 'px,' + epsilon( ty ) + 'px)' + getCameraCSSMatrix( camera.matrixWorldInverse ) :
-                'translateZ(' + fov + 'px)' + getCameraCSSMatrix( camera.matrixWorldInverse );
-
-            var style = cameraCSSMatrix +
-                'translate(' + _widthHalf + 'px,' + _heightHalf + 'px)';
-
-            if ( cache.camera.style !== style && ! isIE ) {
-
-                cameraElement.style.WebkitTransform = style;
-                cameraElement.style.transform = style;
-
-                cache.camera.style = style;
-
-            }
-
-            renderObject( scene, scene, camera, cameraCSSMatrix );
-
-            if ( isIE ) {
-
-                // IE10 and 11 does not support 'preserve-3d'.
-                // Thus, z-order in 3D will not work.
-                // We have to calc z-order manually and set CSS z-index for IE.
-                // FYI: z-index can't handle object intersection
-                zOrder( scene );
-
-            }
-
-        };
-
-    };
 
 }
