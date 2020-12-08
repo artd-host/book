@@ -119,7 +119,7 @@
 
 .flipbook-book {
     display: block;
-    position: relative;
+    position: absolute;
 }
 
 .flipbook-page {
