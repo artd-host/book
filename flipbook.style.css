@@ -597,7 +597,6 @@
 
 .flipbook-menuWrapper:hover {
     opacity: 1;
-    text-align: start !important;
 }
 
 .flipbook-menu {
