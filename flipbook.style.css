@@ -251,8 +251,8 @@
 .flipbook-center-container3 {
     position: relative;
     /* height:100%; */
-    perspective: 4000px;
-    -webkit-perspective: 4000px;
+    perspective: 1900px;
+    -webkit-perspective: 1900px;
     transform: translateZ(0px);
     /*-webkit-transform:translateZ(0px);*/
     will-change: transform;
