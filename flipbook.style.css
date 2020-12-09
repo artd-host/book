@@ -1,3 +1,7 @@
+.entry-content img {
+  max-width: 100%;
+}
+
 .flipbook-overlay {
     position: fixed;
     top: 0;
@@ -251,8 +255,8 @@
 .flipbook-center-container3 {
     position: relative;
     /* height:100%; */
-    perspective: 1900px;
-    -webkit-perspective: 1900px;
+    perspective: 4000px;
+    -webkit-perspective: 4000px;
     transform: translateZ(0px);
     /*-webkit-transform:translateZ(0px);*/
     will-change: transform;
